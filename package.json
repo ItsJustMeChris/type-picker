@@ -1,0 +1,40 @@
+{
+  "name": "type-picker",
+  "module": "./dist/index.js",
+  "type": "module",
+  "private": false,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^24.5.2"
+  },
+  "dependencies": {
+    "typescript": "^5.9.2"
+  },
+  "version": "0.1.0",
+  "description": "CLI for inspecting real TypeScript types for AI workflows",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "tsp": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "dev": "bun run src/cli.ts --",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "typescript",
+    "cli",
+    "types",
+    "tsserver",
+    "ai"
+  ],
+  "engines": {
+    "node": ">=18.18",
+    "bun": ">=1.0.0"
+  }
+}
