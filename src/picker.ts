@@ -45,6 +45,7 @@ export interface DiagnosticInfo {
   file?: string;
   line?: number;
   column?: number;
+  code?: number;
 }
 
 export interface TypeInfo {
@@ -73,6 +74,7 @@ export interface TypeInfo {
   properties: PropertyInfo[];
   declarations: DeclarationInfo[];
   diagnostics: DiagnosticInfo[];
+  projectDiagnostics: DiagnosticInfo[];
 }
 
 interface ProgramContext {
@@ -128,7 +130,8 @@ export function pickType(query: TypeQuery): TypeInfo {
   const signatures = collectSignatures(type, checker, node);
   const properties = collectProperties(type, checker, node);
   const declarations = symbol ? collectDeclarations(symbol, checker) : [];
-  const diagnostics = collectDiagnostics(program, sourceFile);
+  const diagnostics = collectFileDiagnostics(program, sourceFile);
+  const projectDiagnostics = collectProgramDiagnostics(program);
   const matchedText = resolution.matchedText && resolution.matchedText.length > 0
     ? resolution.matchedText
     : node.getText();
@@ -174,6 +177,7 @@ export function pickType(query: TypeQuery): TypeInfo {
     properties,
     declarations,
     diagnostics,
+    projectDiagnostics,
   };
 }
 
@@ -451,27 +455,37 @@ function collectDeclarations(symbol: ts.Symbol, checker: ts.TypeChecker, limit =
   });
 }
 
-function collectDiagnostics(program: ts.Program, sourceFile: ts.SourceFile): DiagnosticInfo[] {
+function collectFileDiagnostics(program: ts.Program, sourceFile: ts.SourceFile): DiagnosticInfo[] {
   const diagnostics = ts.getPreEmitDiagnostics(program, sourceFile);
+  return diagnostics.map(transformDiagnostic);
+}
 
-  return diagnostics.map((diagnostic) => {
-    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase() as DiagnosticInfo["category"];
-    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
-    const diagFile = diagnostic.file;
-    const info: DiagnosticInfo = {
-      category,
-      message,
-    };
+function collectProgramDiagnostics(program: ts.Program): DiagnosticInfo[] {
+  const diagnostics = ts.getPreEmitDiagnostics(program);
+  return diagnostics.map(transformDiagnostic);
+}
 
-    if (diagFile && typeof diagnostic.start === "number") {
-      const { line, character } = diagFile.getLineAndCharacterOfPosition(diagnostic.start);
-      info.file = path.normalize(diagFile.fileName);
-      info.line = line + 1;
-      info.column = character + 1;
-    }
+function transformDiagnostic(diagnostic: ts.Diagnostic): DiagnosticInfo {
+  const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase() as DiagnosticInfo["category"];
+  const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+  const diagFile = diagnostic.file;
+  const info: DiagnosticInfo = {
+    category,
+    message,
+  };
 
-    return info;
-  });
+  if (diagFile && typeof diagnostic.start === "number") {
+    const { line, character } = diagFile.getLineAndCharacterOfPosition(diagnostic.start);
+    info.file = path.normalize(diagFile.fileName);
+    info.line = line + 1;
+    info.column = character + 1;
+  }
+
+  if (typeof diagnostic.code === "number") {
+    info.code = diagnostic.code;
+  }
+
+  return info;
 }
 
 function condenseSnippet(snippet: string, maxLength = 160): string {

@@ -29,7 +29,7 @@ tsp src/http.ts --regex "createServer" --index 0 --compact
 
 ## Integration ideas
 - **Pre-flight checks:** before generating a function body, call `tsp` on referenced symbols and inject the JSON into the reasoning chain.
-- **Guardrails:** if `diagnostics` is non-empty, pivot the agent to fixing compilation errors instead of extending broken code.
+- **Guardrails:** if `diagnostics` or `projectDiagnostics` is non-empty, pivot the agent to fixing compilation errors instead of extending broken code.
 - **Context packs:** store relevant `tsp` responses alongside retrieved source snippets so the agent has both syntax and semantic facts.
 
 ## Tips

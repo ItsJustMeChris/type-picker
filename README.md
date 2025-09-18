@@ -4,7 +4,7 @@ A Bun-powered command line tool that asks the TypeScript compiler for ground-tru
 
 ## Features
 - Query the type at any file location using line/column or a regex match.
-- Outputs rich JSON including type strings, symbol metadata, signatures, property summaries, and declaration snippets.
+- Outputs rich JSON including type strings, symbol metadata, signatures, property summaries, declaration snippets, and project-wide diagnostics.
 - Points at diagnostics from the TypeScript compiler so AI agents can gracefully degrade when the program does not type-check.
 - Fast to invoke from other tooling thanks to Bun + pure TypeScript implementation (no editor or IDE dependencies).
 
@@ -57,6 +57,7 @@ tsp <file> (--line <n> --column <n> | --regex <pattern>) [options]
 | `--omit-diagnostics` | Drop diagnostic messages from the output |
 | `--omit-properties` | Drop the property summary table |
 | `--omit-signatures` | Drop call / construct signature details |
+| `--omit-project-diagnostics` | Drop project-wide diagnostics aggregated across the build graph |
 | `--version` | Print the package version |
 | `--help` | Display the usage summary |
 

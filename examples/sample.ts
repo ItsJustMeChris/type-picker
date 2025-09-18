@@ -19,3 +19,5 @@ export async function listUserNames(): Promise<string[]> {
 export const userCount = (await loadUsers()).length;
 
 export const firstUser = (await loadUsers())[0];
+
+export const userEmails = (await loadUsers()).map((user) => user.first);

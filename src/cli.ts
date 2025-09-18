@@ -19,7 +19,8 @@ type CliOptionKeys =
   | "version"
   | "omit-diagnostics"
   | "omit-properties"
-  | "omit-signatures";
+  | "omit-signatures"
+  | "omit-project-diagnostics";
 
 function main() {
   const { values, positionals } = parseArgs({
@@ -38,6 +39,7 @@ function main() {
       "omit-diagnostics": { type: "boolean" },
       "omit-properties": { type: "boolean" },
       "omit-signatures": { type: "boolean" },
+      "omit-project-diagnostics": { type: "boolean" },
     } satisfies Record<CliOptionKeys, { type: "string" | "boolean" }>,
   });
 
@@ -133,12 +135,17 @@ function applyOutputFilters(result: TypeInfo, values: Record<string, unknown>): 
   const clone: TypeInfo = {
     ...result,
     diagnostics: [...result.diagnostics],
+    projectDiagnostics: [...result.projectDiagnostics],
     properties: [...result.properties],
     signatures: [...result.signatures],
   };
 
   if (values["omit-diagnostics"]) {
     clone.diagnostics = [];
+  }
+
+  if (values["omit-project-diagnostics"]) {
+    clone.projectDiagnostics = [];
   }
 
   if (values["omit-properties"]) {
@@ -169,6 +176,7 @@ function printHelp(invokedAs: string): void {
     "  --omit-diagnostics     Exclude TypeScript diagnostics from the result",
     "  --omit-properties      Exclude property summaries from the result",
     "  --omit-signatures      Exclude signatures from the result",
+    "  --omit-project-diagnostics  Exclude project-wide diagnostics",
     "  --version              Print the CLI version",
     "  --help                 Show this message",
   ];
