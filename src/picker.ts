@@ -380,21 +380,51 @@ function collectProperties(
   node: ts.Node,
   limit = 25,
 ): PropertyInfo[] {
-  const properties: PropertyInfo[] = [];
+  const nonNullable = checker.getNonNullableType(type);
+  const memberTypes = (nonNullable.flags & ts.TypeFlags.Union) !== 0
+    ? (nonNullable as ts.UnionType).types ?? []
+    : [nonNullable];
 
-  if (!type.getProperties) {
-    return properties;
+  const symbolByName = new Map<string, ts.Symbol>();
+  const presenceByName = new Map<string, number>();
+  const optionalFlagByName = new Map<string, boolean>();
+
+  for (const member of memberTypes) {
+    const apparent = checker.getApparentType(member);
+    const props = checker.getPropertiesOfType(apparent);
+    const seen = new Set<string>();
+    for (const prop of props) {
+      const name = prop.getName();
+      if (!symbolByName.has(name)) {
+        symbolByName.set(name, prop);
+      }
+      if (!seen.has(name)) {
+        presenceByName.set(name, (presenceByName.get(name) ?? 0) + 1);
+        seen.add(name);
+      }
+      if ((prop.getFlags() & ts.SymbolFlags.Optional) !== 0) {
+        optionalFlagByName.set(name, true);
+      } else if (!optionalFlagByName.has(name)) {
+        optionalFlagByName.set(name, false);
+      }
+    }
   }
 
-  for (const symbol of type.getProperties().slice(0, limit)) {
+  const names = Array.from(symbolByName.keys()).sort();
+  const totalMembers = memberTypes.length > 0 ? memberTypes.length : 1;
+
+  const properties: PropertyInfo[] = [];
+  for (const name of names.slice(0, limit)) {
+    const symbol = symbolByName.get(name)!;
     const declarations = symbol.getDeclarations();
     const declaration = declarations?.[0];
     const propertyType = checker.getTypeOfSymbolAtLocation(symbol, declaration ?? node);
-    const optional = (symbol.getFlags() & ts.SymbolFlags.Optional) !== 0;
+    const optionalByUnion = (presenceByName.get(name) ?? 0) < totalMembers;
+    const optionalByFlag = optionalFlagByName.get(name) ?? false;
     properties.push({
-      name: symbol.getName(),
+      name,
       type: checker.typeToString(propertyType, declaration ?? node),
-      optional,
+      optional: optionalByFlag || optionalByUnion,
     });
   }
 
